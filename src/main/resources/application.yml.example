@@ -1,0 +1,31 @@
+server:
+  port: 8087
+  ssl:
+    key-store: classpath:5963105_www.peteralbus.com.pfx
+    key-alias: tomcat
+    key-store-password: m4i0YPJ8
+    key-store-type: PKCS12
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 1000MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  datasource:
+    username: username
+    password: password
+    url: jdbc:mysql://47.117.160.245:3306/earthquake?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*Mapper.xml
+  type-aliases-package: com.peteralbus.entity
+  configuration:
+    map-underscore-to-camel-case: true
