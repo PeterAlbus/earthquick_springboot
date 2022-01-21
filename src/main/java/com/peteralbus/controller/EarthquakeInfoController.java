@@ -165,4 +165,10 @@ public class EarthquakeInfoController
             return "fail";
         }
     }
+
+    @RequestMapping("/233")
+    public String test()
+    {
+        return "233";
+    }
 }
