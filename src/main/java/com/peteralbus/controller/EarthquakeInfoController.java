@@ -27,24 +27,9 @@ import java.util.Map;
 public class EarthquakeInfoController
 {
     /**
-     * The Estimate util.
-     */
-    EstimateUtil estimateUtil;
-    /**
      * The Earthquake info service.
      */
     EarthquakeInfoService earthquakeInfoService;
-
-    /**
-     * Sets estimate util.
-     *
-     * @param estimateUtil the estimate util
-     */
-    @Autowired
-    public void setEstimateUtil(EstimateUtil estimateUtil)
-    {
-        this.estimateUtil = estimateUtil;
-    }
 
     /**
      * Sets earthquake info service.
@@ -82,38 +67,6 @@ public class EarthquakeInfoController
         mapParameter.put("earthquakeId",earthquakeId);
         return earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
     }
-
-    /**
-     * Gets death predict.
-     *
-     * @param earthquakeId the earthquake info id
-     * @return the death predict
-     */
-    @GetMapping("/getDeathPredict")
-    public double getDeathPredict(int earthquakeId)
-    {
-        Map<String, Object> mapParameter = new HashMap<String, Object>();
-        mapParameter.put("earthquakeId",earthquakeId);
-        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
-        int population=3133;
-        return estimateUtil.deathPredict(population,earthquakeInfo.getMagnitude(),earthquakeInfo.getHighIntensity());
-    }
-
-    /**
-     * Gets economy predict.
-     *
-     * @param earthquakeId the earthquake info id
-     * @return the economy predict
-     */
-    @GetMapping("/getEconomyPredict")
-    public double getEconomyPredict(int earthquakeId)
-    {
-        Map<String, Object> mapParameter = new HashMap<String, Object>();
-        mapParameter.put("earthquakeId",earthquakeId);
-        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
-        return estimateUtil.economyPredict(earthquakeInfo.getHighIntensity());
-    }
-
     /**
      * Add earthquake string.
      *

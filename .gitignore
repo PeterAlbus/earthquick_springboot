@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /src/main/resources/5963105_www.peteralbus.com.pfx
-/src/main/resources/application.yml
+/src/main/resources/application.yml.example

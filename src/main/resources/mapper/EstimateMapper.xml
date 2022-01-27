@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.peteralbus.mapper.EarthquakeInfoMapper">
+<mapper namespace="com.peteralbus.mapper.EstimateMapper">
     <resultMap id="EarthquakeInfoWithLines" type="EarthquakeInfo">
         <id property="earthquakeId" column="earthquake_id"/>
         <result property="earthquakeName" column="earthquake_name"/>
@@ -19,20 +19,21 @@
             <result property="earthquakeId" column="earthquake_id"/>
         </collection>
     </resultMap>
-    <select id="queryInfoWithLine" resultMap="EarthquakeInfoWithLines">
-        select earthquake_info.earthquake_id,earthquake_name,magnitude,high_intensity,longitude, latitude, depth ,earthquake_time, line_id, long_radius, angle, intensity, short_radius
-        from earthquake.earthquake_info,earthquake.intensity_line
-        WHERE intensity_line.earthquake_id=earthquake_info.earthquake_id
-        <if test="earthquakeId !=null">
-            and intensity_line.earthquake_id=#{earthquakeId}
-        </if>
-        <if test="startIndex != null and pageSize != NULL">
-            limit #{startIndex},#{pageSize}
-        </if>
-    </select>
 
     <select id="getPopulation" resultType="double">
         select avg(z) from population
         where x>#{minLongitude} and x &lt;#{maxLongitude} and y>#{minLatitude} and y &lt; #{maxLatitude}
+    </select>
+
+    <select id="queryAnalyzeById" resultType="Estimate">
+        select predict_death,predict_economy,population
+        from estimate
+        where earthquake_id = #{earthquakeId}
+    </select>
+
+    <select id="queryAnalyze" resultType="int">
+        select count(*)
+        from estimate
+        where earthquake_id = #{earthquakeId}
     </select>
 </mapper>
