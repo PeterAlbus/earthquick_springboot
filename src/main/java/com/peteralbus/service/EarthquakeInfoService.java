@@ -1,6 +1,7 @@
 package com.peteralbus.service;
 
 import com.peteralbus.entity.EarthquakeInfo;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
