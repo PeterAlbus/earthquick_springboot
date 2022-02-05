@@ -10,28 +10,63 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * The type Hospital controller.
+ * @author PeterAlbus
+ */
 @CrossOrigin
 @RestController
 public class HospitalController {
-    @Autowired
+
+    /**
+     * The Hospital service.
+     */
     HospitalService hospitalService;
+
+    /**
+     * Sets hospital service.
+     *
+     * @param hospitalService the hospital service
+     */
+    @Autowired
+    public void setHospitalService(HospitalService hospitalService)
+    {
+        this.hospitalService = hospitalService;
+    }
+
+    /**
+     * Find all hospital list.
+     *
+     * @return the list
+     */
     @RequestMapping("/findAllHospital")
     public List<Hospital> findAllHospital(){
     return hospitalService.findAllHospital();
     }
+
+    /**
+     * Calculate distance distance.
+     *
+     * @param lng the lng
+     * @param lat the lat
+     * @return the distance
+     */
     @RequestMapping("/calculateDistance")
-    public Distance calculateDistance(double lng, double lat){//输入经纬度的值，遍历所有Hosiptai的经纬度并比较其距离
-//        return getDistance(121.446014,31.215937,121.446028464238,31.2158502442799 );
+    public Distance calculateDistance(double lng, double lat)
+    {
+        //输入经纬度的值，遍历所有Hospital的经纬度并比较其距离
+        //return getDistance(121.446014,31.215937,121.446028464238,31.2158502442799 );
         System.out.print("进入函数calculate");
         List<Hospital> hospitals=hospitalService.findAllHospital();
-        double minDistance=Double.MAX_VALUE;
+        Double minDistance=Double.MAX_VALUE;
         Distance distance=new Distance();
-        for(int i=0;i<hospitals.size();i++){
-            Hospital hospital=hospitals.get(i);
-            double distanceTwoPlaces=getDistance(hospital.getLon(),hospital.getLat(),lng,lat);
+        for (Hospital hospital : hospitals)
+        {
+            Double distanceTwoPlaces = getDistance(hospital.getLon(), hospital.getLat(), lng, lat);
             System.out.println(distanceTwoPlaces);
-            minDistance=Math.min(minDistance,distanceTwoPlaces);
-            if(minDistance==distanceTwoPlaces){
+            minDistance = Math.min(minDistance, distanceTwoPlaces);
+            if (minDistance.equals(distanceTwoPlaces))
+            {
                 distance.setDistance(minDistance);
                 distance.setEndLon(hospital.getLon());
                 distance.setEndLat(hospital.getLat());
@@ -44,6 +79,16 @@ public class HospitalController {
         return distance;
     }
     private static final double EARTH_RADIUS = 6378.137;
+
+    /**
+     * Gets distance.
+     *
+     * @param longitude1 the longitude 1
+     * @param latitude1  the latitude 1
+     * @param longitude2 the longitude 2
+     * @param latitude2  the latitude 2
+     * @return the distance
+     */
     public static double getDistance(double longitude1, double latitude1, double longitude2, double latitude2) {
         // 纬度
         double lat1 = Math.toRadians(latitude1);
@@ -56,16 +101,25 @@ public class HospitalController {
         // 经度之差
         double b = lng1 - lng2;
         // 计算两点距离的公式
-        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) +
-                Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(b / 2), 2)));
+        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(b / 2), 2)));
         // 弧长乘地球半径, 返回单位: 千米
         s =  s * EARTH_RADIUS;
         return s;
     }
-//    Haversine公式的最终实现方式可以有多种，比如借助转角度的函数atan2：
-    public static double getDistance2(double longitude1, double latitude1,
-                                      double longitude2, double latitude2) {
 
+    /**
+     * Gets distance 2.
+     *
+     * @param longitude1 the longitude 1
+     * @param latitude1  the latitude 1
+     * @param longitude2 the longitude 2
+     * @param latitude2  the latitude 2
+     * @return the distance 2
+     */
+
+    public static double getDistance2(double longitude1, double latitude1, double longitude2, double latitude2)
+    {
+        //Haversine公式的最终实现方式可以有多种，比如借助转角度的函数atan2：
         double latDistance = Math.toRadians(longitude1 - longitude2);
         double lngDistance = Math.toRadians(latitude1 - latitude2);
 

@@ -4,15 +4,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * The type Distance.
+ * @author PeterAlbus
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Distance {
-    private double startLon;
-    private double startLat;
-    private double endLon;
-    private double endLat;
-    private double distance;
+    private Double startLon;
+    private Double startLat;
+    private Double endLon;
+    private Double endLat;
+    private Double distance;
     private String endName;
     private String endAddress;
 }

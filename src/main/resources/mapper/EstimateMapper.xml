@@ -26,7 +26,7 @@
     </select>
 
     <select id="queryAnalyzeById" resultType="Estimate">
-        select predict_death,predict_economy,population
+        select analyze_id, earthquake_id, predict_death, predict_economy, population, gmt_create
         from estimate
         where earthquake_id = #{earthquakeId}
     </select>

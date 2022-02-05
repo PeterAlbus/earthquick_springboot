@@ -6,10 +6,23 @@ import com.peteralbus.service.EstimateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * The type Estimate service.
+ * @author PeterAlbus
+ */
 @Service
 public class EstimateServiceImpl implements EstimateService {
 
+    /**
+     * The Estimate mapper.
+     */
     EstimateMapper estimateMapper;
+
+    /**
+     * Set analyze mapper.
+     *
+     * @param estimateMapper the estimate mapper
+     */
     @Autowired
     public void setAnalyzeMapper(EstimateMapper estimateMapper){
         this.estimateMapper = estimateMapper;

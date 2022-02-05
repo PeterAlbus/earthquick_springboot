@@ -29,6 +29,7 @@ import java.util.List;
 public class EarthquakeInfo implements Serializable
 {
     @TableId(type= IdType.ASSIGN_ID)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long earthquakeId;
     private String earthquakeName;
     private Double magnitude;

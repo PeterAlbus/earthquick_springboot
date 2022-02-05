@@ -2,6 +2,7 @@ package com.peteralbus.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,11 +22,13 @@ import java.io.Serializable;
 public class IntensityLine implements Serializable
 {
     @TableId(type= IdType.ASSIGN_ID)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long lineId;
     private Double longRadius;
     private Double shortRadius;
     private Double angle;
     private Integer intensity;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long earthquakeId;
 
     public IntensityLine(Double longRadius, Double shortRadius, Double angle, Integer intensity, Long earthquakeId)

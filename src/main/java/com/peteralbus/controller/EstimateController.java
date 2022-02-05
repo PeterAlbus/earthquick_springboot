@@ -16,6 +16,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The type Estimate controller.
+ * @author PeterAlbus
+ */
 @CrossOrigin
 @RestController
 @RequestMapping("/estimate")
@@ -25,6 +29,9 @@ public class EstimateController {
      */
     EstimateUtil estimateUtil;
 
+    /**
+     * The Estimate service.
+     */
     EstimateService estimateService;
     /**
      * The Earthquake info service.
@@ -41,6 +48,7 @@ public class EstimateController {
     {
         this.earthquakeInfoService = earthquakeInfoService;
     }
+
     /**
      * Sets estimate util.
      *
@@ -51,10 +59,11 @@ public class EstimateController {
     {
         this.estimateUtil = estimateUtil;
     }
+
     /**
      * Sets estimate service.
      *
-     * @param estimateService
+     * @param estimateService the service of estimate
      */
     @Autowired
     public void setAnalyzeService(EstimateService estimateService) {
@@ -72,7 +81,8 @@ public class EstimateController {
         System.out.println(earthquakeId);
         int count = estimateService.queryAnalyze(earthquakeId);
         Estimate estimate = new Estimate();
-        if(count==0){
+        if(count==0)
+        {
             Map<String, Object> mapParameter = new HashMap<String, Object>();
             mapParameter.put("earthquakeId",earthquakeId);
             EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
@@ -84,7 +94,8 @@ public class EstimateController {
                     shortRadius = earthquakeInfo.getIntensityLineList().get(2).getShortRadius();
             System.out.println(longRadius);
             LocalDateTime earthquakeTime = earthquakeInfo.getEarthquakeTime();
-            double radians = Math.toRadians(latitude);//将角度转换为弧度。
+            //将角度转换为弧度。
+            double radians = Math.toRadians(latitude);
             double minLongitude = longitude-shortRadius/(111-Math.cos(radians)),
                     maxLongitude = longitude+shortRadius/(111-Math.cos(radians)),
                     minLatitude = latitude-longRadius/111,
@@ -94,9 +105,9 @@ public class EstimateController {
             estimate.setPredictEconomy(estimateUtil.economyPredict(earthquakeInfo.getHighIntensity()));
             estimate.setEarthquakeId(earthquakeId);
             estimate.setPopulation(population);
-            Date date = new Date();
-            estimate.setGmt_time(date);
-            estimateService.insertAnalyze(estimate);
+            LocalDateTime date = LocalDateTime.now();
+            estimate.setGmtCreate(date);
+            int result=estimateService.insertAnalyze(estimate);
         }
         else
         {
