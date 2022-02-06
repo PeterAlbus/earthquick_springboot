@@ -79,6 +79,28 @@ public class EarthquakeInfo implements Serializable
     }
 
     /**
+     * Gets intensity by distance.
+     *
+     * @param x1    the x 1
+     * @param y1    the y 1
+     * @param z1    the z 1
+     * @param b1    the b 1
+     * @param e1    the e 1
+     * @param x2    the x 2
+     * @param y2    the y 2
+     * @param z2    the z 2
+     * @param b2    the b 2
+     * @param e2    the e 2
+     * @param meter the meter
+     * @return the intensity by distance
+     */
+    public Double getIntensityByDistance(double x1,double y1,double z1,double b1,double e1,double x2,double y2,double z2,double b2,double e2,Double meter)
+    {
+        double kilometer=meter/1000;
+        return x1+y1*magnitude-z1*Math.log10(kilometer+b1)+e1;
+    }
+
+    /**
      * Gets intensity , use ln.
      *
      * @param x1 The first regression constant of the regression equation(for long radius)

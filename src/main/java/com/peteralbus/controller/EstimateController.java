@@ -5,6 +5,10 @@ import com.peteralbus.entity.EarthquakeInfo;
 import com.peteralbus.service.EstimateService;
 import com.peteralbus.service.EarthquakeInfoService;
 import com.peteralbus.util.EstimateUtil;
+import org.gavaghan.geodesy.Ellipsoid;
+import org.gavaghan.geodesy.GeodeticCalculator;
+import org.gavaghan.geodesy.GeodeticCurve;
+import org.gavaghan.geodesy.GlobalCoordinates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * The type Estimate controller.
+ *
  * @author PeterAlbus
  */
 @CrossOrigin
@@ -77,7 +83,7 @@ public class EstimateController {
      * @return the estimate result
      */
     @GetMapping("/getAnalyzeResult")
-    public Estimate getPredictResult(long earthquakeId){
+    public Estimate getPredictResult(Long earthquakeId){
         System.out.println(earthquakeId);
         int count = estimateService.queryAnalyze(earthquakeId);
         Estimate estimate = new Estimate();
@@ -114,5 +120,36 @@ public class EstimateController {
             estimate = estimateService.queryAnalyzeById(earthquakeId);
         }
         return estimate;
+    }
+
+    /**
+     * Gets Point intensity.
+     *
+     * @param earthquakeId the earthquake id
+     * @param longitude    the longitude
+     * @param latitude     the latitude
+     * @return the intensity
+     */
+    @GetMapping("/getPointIntensity")
+    public Double getPointIntensity(Long earthquakeId,Double longitude,Double latitude)
+    {
+        Double intensity= (double) 0;
+        Map<String, Object> mapParameter = new HashMap<String, Object>();
+        mapParameter.put("earthquakeId",earthquakeId);
+        EarthquakeInfo earthquakeInfo = earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
+        GlobalCoordinates source = new GlobalCoordinates(latitude, longitude);
+        GlobalCoordinates target = new GlobalCoordinates(earthquakeInfo.getLatitude(), earthquakeInfo.getLongitude());
+        GeodeticCurve geoCurve = new GeodeticCalculator().calculateGeodeticCurve(Ellipsoid.WGS84, source, target);
+        Double meter = geoCurve.getEllipsoidalDistance();
+        Double dividingLine=105.1;
+        if(earthquakeInfo.getLongitude()<dividingLine)
+        {
+            intensity=earthquakeInfo.getIntensityByDistance(5.253,1.398,4.164,26,0,2.019,1.398,2.943,8,0,meter);
+        }
+        else
+        {
+            intensity=earthquakeInfo.getIntensityByDistance(5.019,1.446,4.136,24,0,2.240,1.446,3.070,9,0,meter);
+        }
+        return intensity;
     }
 }
