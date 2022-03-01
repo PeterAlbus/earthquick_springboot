@@ -56,14 +56,12 @@ public class HospitalController {
     {
         //输入经纬度的值，遍历所有Hospital的经纬度并比较其距离
         //return getDistance(121.446014,31.215937,121.446028464238,31.2158502442799 );
-        System.out.print("进入函数calculate");
         List<Hospital> hospitals=hospitalService.findAllHospital();
         Double minDistance=Double.MAX_VALUE;
         Distance distance=new Distance();
         for (Hospital hospital : hospitals)
         {
             Double distanceTwoPlaces = getDistance(hospital.getLon(), hospital.getLat(), lng, lat);
-            System.out.println(distanceTwoPlaces);
             minDistance = Math.min(minDistance, distanceTwoPlaces);
             if (minDistance.equals(distanceTwoPlaces))
             {

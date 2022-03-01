@@ -3,14 +3,20 @@ package com.peteralbus.controller;
 import com.peteralbus.entity.EarthquakeInfo;
 import com.peteralbus.service.EarthquakeInfoService;
 import com.peteralbus.util.EstimateUtil;
+import com.peteralbus.util.GeoUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,12 +67,42 @@ public class EarthquakeInfoController
      * @return the earthquake by id
      */
     @GetMapping("/getEarthquakeById")
-    EarthquakeInfo getEarthquakeById(int earthquakeId)
+    EarthquakeInfo getEarthquakeById(Long earthquakeId)
     {
         Map<String, Object> mapParameter = new HashMap<String, Object>();
         mapParameter.put("earthquakeId",earthquakeId);
         return earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
     }
+
+    /**
+     * Gets earthquake by condition.
+     *
+     * @param area   the area
+     * @param start the start time(string)
+     * @param end   the end time(string)
+     * @return the earthquake by condition
+     */
+    @GetMapping("/getEarthquakeByCondition")
+    List<EarthquakeInfo> getEarthquakeByCondition(String area, String start, String end)
+    {
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime startTime=LocalDateTime.parse(start,df);
+        LocalDateTime endTime=LocalDateTime.parse(end,df);
+        List<EarthquakeInfo> result=new ArrayList<>();
+        List<EarthquakeInfo> earthquakeInfoList=earthquakeInfoService.queryInfoWithLine(null);
+        for(EarthquakeInfo earthquakeInfo:earthquakeInfoList)
+        {
+            if(area.equals(GeoUtil.getCountry(earthquakeInfo.getLongitude(), earthquakeInfo.getLatitude()))||"any".equals(area))
+            {
+                if(startTime.isBefore(earthquakeInfo.getEarthquakeTime())&&endTime.isAfter(earthquakeInfo.getEarthquakeTime()))
+                {
+                    result.add(earthquakeInfo);
+                }
+            }
+        }
+        return result;
+    }
+
     /**
      * Add earthquake string.
      *
@@ -105,7 +141,7 @@ public class EarthquakeInfoController
      * @return the string
      */
     @RequestMapping("/deleteById")
-    public String deleteEarthquake(int earthquakeId)
+    public String deleteEarthquake(Long earthquakeId)
     {
         EarthquakeInfo earthquakeInfo=this.getEarthquakeById(earthquakeId);
         int result=earthquakeInfoService.deleteEarthquakeInfo(earthquakeInfo);

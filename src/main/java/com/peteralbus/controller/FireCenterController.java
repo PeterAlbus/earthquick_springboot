@@ -27,7 +27,6 @@ public class FireCenterController {
         List<Double> FireIntensity=new ArrayList<>();
         List<FireCenter> fireCenters= fireCenterService.getAllFireCenter();
         for(FireCenter fireCenter:fireCenters){
-            System.out.println(fireCenter.getFireId());
             FireIntensity.add(estimateController.getPointIntensity(16L, fireCenter.getFireLon(), fireCenter.getFireLat()));
         }
         return FireIntensity;
@@ -48,7 +47,6 @@ public class FireCenterController {
             arr[2][temp]=Math.log(48.87775814060409*15.304510961044489)+100*Math.random();
             temp++;
         }
-        System.out.println("temp的值为"+temp);
 //        arr[1]=new double[] {0.847,0.63,0.921};
 //        arr[2]=new double[] {524,439,842};
         double [][]arrNew=new double[10][988];
@@ -81,7 +79,6 @@ public class FireCenterController {
             }
             double sumArrNewHang=0.0;
             for(int i=0;i<arr[j].length;i++) {
-                System.out.println("sum"+arrNew[j][i]);
                 //System.out.println("sum"+Math.log(arrNew[j][i]));
                 sumArrNewHang+=(arrNew[j][i]*Math.log(arrNew[j][i]));
             }
@@ -118,7 +115,6 @@ public class FireCenterController {
         //输出排序后的键值对
         int count=0;
         for(Map.Entry<Integer,Double> entry:entrys){
-            System.out.println(entry.getKey()+","+entry.getValue());
             topTen.put(entry.getKey(),entry.getValue());
             FireCenter resultFireCenter=getOneFireCenter(entry.getKey());
             FireWeight fireWeight=new FireWeight();
