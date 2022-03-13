@@ -39,6 +39,7 @@ public class HospitalController {
      *
      * @param earthquakeInfoService the earthquake info service
      */
+    @Autowired
     public void setEarthquakeInfoService(EarthquakeInfoService earthquakeInfoService)
     {
         this.earthquakeInfoService = earthquakeInfoService;
