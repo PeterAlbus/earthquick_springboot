@@ -1,17 +1,24 @@
 package com.peteralbus.controller;
 
 import com.peteralbus.entity.Distance;
+import com.peteralbus.entity.EarthquakeInfo;
 import com.peteralbus.entity.Hospital;
+import com.peteralbus.entity.IntensityLine;
+import com.peteralbus.service.EarthquakeInfoService;
 import com.peteralbus.service.HospitalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The type Hospital controller.
+ *
  * @author PeterAlbus
  */
 @CrossOrigin
@@ -22,6 +29,20 @@ public class HospitalController {
      * The Hospital service.
      */
     HospitalService hospitalService;
+    /**
+     * The Earthquake info service.
+     */
+    EarthquakeInfoService earthquakeInfoService;
+
+    /**
+     * Sets earthquake info service.
+     *
+     * @param earthquakeInfoService the earthquake info service
+     */
+    public void setEarthquakeInfoService(EarthquakeInfoService earthquakeInfoService)
+    {
+        this.earthquakeInfoService = earthquakeInfoService;
+    }
 
     /**
      * Sets hospital service.
@@ -42,6 +63,33 @@ public class HospitalController {
     @RequestMapping("/findAllHospital")
     public List<Hospital> findAllHospital(){
     return hospitalService.findAllHospital();
+    }
+
+
+    /**
+     * Find hospital nearby list.
+     *
+     * @param earthquakeId the earthquake id
+     * @return the list
+     */
+    @RequestMapping("/findHospitalNearby")
+    public List<Hospital> findHospitalNearby(Long earthquakeId)
+    {
+        List<Hospital> hospitals=hospitalService.findAllHospital();
+        List<Hospital> hospitalList=new ArrayList<>();
+        Map<String, Object> mapParameter = new HashMap<String, Object>();
+        mapParameter.put("earthquakeId",earthquakeId);
+        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
+        for (Hospital hospital : hospitals)
+        {
+            double distanceTwoPlaces = getDistance(hospital.getLon(), hospital.getLat(), earthquakeInfo.getLongitude(), earthquakeInfo.getLatitude());
+            List<IntensityLine> intensityLineList=earthquakeInfo.getIntensityLineList();
+            if(distanceTwoPlaces<intensityLineList.get(intensityLineList.size()-1).getLongRadius())
+            {
+                hospitalList.add(hospital);
+            }
+        }
+        return hospitalList;
     }
 
     /**
@@ -114,7 +162,6 @@ public class HospitalController {
      * @param latitude2  the latitude 2
      * @return the distance 2
      */
-
     public static double getDistance2(double longitude1, double latitude1, double longitude2, double latitude2)
     {
         //Haversine公式的最终实现方式可以有多种，比如借助转角度的函数atan2：
