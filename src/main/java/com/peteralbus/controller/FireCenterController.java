@@ -1,7 +1,8 @@
 package com.peteralbus.controller;
 
-import com.peteralbus.entity.FireCenter;
-import com.peteralbus.entity.FireWeight;
+import com.peteralbus.entity.*;
+import com.peteralbus.service.EarthquakeInfoService;
+import com.peteralbus.service.EstimateService;
 import com.peteralbus.service.FireCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,14 +19,37 @@ public class FireCenterController {
     FireCenterService fireCenterService;
     @Autowired
     EstimateController estimateController;
+    @Autowired
+    EstimateService estimateService;
+    @Autowired
+    EarthquakeInfoService earthquakeInfoService;
     @RequestMapping("/getAllFireCenter")
     public List<FireCenter> getAllFireCenter(){
         return fireCenterService.getAllFireCenter();
     }
+
+    //获取一个地震区域的消防站位置
+    public List<FireCenter> getOnePlaceAllFireCenter(Long earthquakeId){
+        List<FireCenter> fireCenters=getAllFireCenter();
+        List<FireCenter> fireCenterList=new ArrayList<>();
+        Map<String,Object>mapParameter=new HashMap<>();
+        mapParameter.put("earthquakeId",earthquakeId);
+        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
+        for(FireCenter fireCenter:fireCenters){
+            double distanceTwoPlaces=getDistance(fireCenter.getFireLon(),fireCenter.getFireLat(),earthquakeInfo.getLongitude(),earthquakeInfo.getLatitude());
+            List<IntensityLine> intensityLineList=earthquakeInfo.getIntensityLineList();
+            if(distanceTwoPlaces<intensityLineList.get(intensityLineList.size()-1).getLongRadius())
+            {
+                fireCenterList.add(fireCenter);
+            }
+        }
+        System.out.println(fireCenterList);
+        return fireCenterList;
+    }
     @RequestMapping("/getFireCenterResult")
     public List<Double> getFireCenterIntensity(){
         List<Double> FireIntensity=new ArrayList<>();
-        List<FireCenter> fireCenters= fireCenterService.getAllFireCenter();
+        List<FireCenter> fireCenters= fireCenterService.getAllFireCenter();//这里需要获取比较新的火点数据
         for(FireCenter fireCenter:fireCenters){
             FireIntensity.add(estimateController.getPointIntensity(16L, fireCenter.getFireLon(), fireCenter.getFireLat()));
         }
@@ -35,22 +59,36 @@ public class FireCenterController {
     public FireCenter getOneFireCenter(int id){
         return fireCenterService.getAllFireCenter().get(id);
     }
-    @RequestMapping("/calculateWeight")
-    public List<FireWeight> getFireCenterWeight(){
-        double [][] arr=new double [10][988];
-        List<Double> FireCenterIntensityArr=getFireCenterIntensity();
-//        System.out.println(FireCenterIntensityArr);
+    @RequestMapping("/findFireCenterNearby")
+    public List<FireWeight> getFireCenterWeight(Long earthquakeId){
+        List<FireCenter> OnePlaceAllFireCenter=getOnePlaceAllFireCenter(earthquakeId);
+        List<Double> FireCenterIntensityArr=new ArrayList<>();
+        for(FireCenter fireCenter:OnePlaceAllFireCenter){
+            FireCenterIntensityArr.add(estimateController.getPointIntensity(16L, fireCenter.getFireLon(), fireCenter.getFireLat()));
+        }
+        int FireCenterIntensityArSize=FireCenterIntensityArr.size();
+        System.out.print("FireCenterIntensityArSize长度为"+FireCenterIntensityArSize);
+        if(FireCenterIntensityArSize==0){
+            return null;
+        }
+        Map<Integer,Integer>map = new HashMap<Integer,Integer>();
+        for(int i=0;i<FireCenterIntensityArSize;i++){
+            map.put(i,OnePlaceAllFireCenter.get(i).getFireId());
+        }
+        double [][] arr=new double [10][FireCenterIntensityArSize];
+        //通过earthquakeId获得想要的地区的估计结果
+        Estimate estimate=estimateService.queryAnalyzeById(earthquakeId);
         int temp=0;
         for(double f:FireCenterIntensityArr){
             arr[0][temp]=f;//属性1，对于资助点1、2、3的值,因为基本上属性是固定的，可能资助点的数量会增加,假定属性最大值为10个
-            arr[1][temp]=101*f+100*Math.random();
-            arr[2][temp]=Math.log(48.87775814060409*15.304510961044489)+100*Math.random();
+            arr[1][temp]=estimate.getPopulation()*f+100*Math.random();
+            arr[2][temp]=Math.log(estimate.getPredictDeath()*estimate.getPredictEconomy())+100*Math.random();
             temp++;
         }
 //        arr[1]=new double[] {0.847,0.63,0.921};
 //        arr[2]=new double[] {524,439,842};
-        double [][]arrNew=new double[10][988];
-        double [][]arrNew1=new double[10][988];
+        double [][]arrNew=new double[10][FireCenterIntensityArSize];
+        double [][]arrNew1=new double[10][FireCenterIntensityArSize];
         double sumProvide=0;
         double max;
         double min;
@@ -108,7 +146,8 @@ public class FireCenterController {
         for(int i=0;i<strictNum;i++){
             arrayW1.add(w[i]);
 //            System.out.println("第+"+(i+1)+"个地区的权重值为"+w[i]);
-            arrayStrict.put(i+1,w[i]);
+//            arrayStrict.put(i+1,w[i]);
+              arrayStrict.put(i,w[i]);
         }
         List<Map.Entry<Integer,Double>> entrys=new ArrayList<>(arrayStrict.entrySet());
         Collections.sort(entrys, new MyComparator());
@@ -116,7 +155,7 @@ public class FireCenterController {
         int count=0;
         for(Map.Entry<Integer,Double> entry:entrys){
             topTen.put(entry.getKey(),entry.getValue());
-            FireCenter resultFireCenter=getOneFireCenter(entry.getKey());
+            FireCenter resultFireCenter=getOneFireCenter(map.get(entry.getKey()));
             FireWeight fireWeight=new FireWeight();
             fireWeight.setFireId(resultFireCenter.getFireId());
             fireWeight.setFireLat(resultFireCenter.getFireLat());
@@ -134,5 +173,23 @@ public class FireCenterController {
 //        return arrayW1;
 //        return topTen;
         return resultFireWeightLists;
+    }
+    private static final double EARTH_RADIUS = 6378.137;
+    public static double getDistance(double longitude1, double latitude1, double longitude2, double latitude2) {
+        // 纬度
+        double lat1 = Math.toRadians(latitude1);
+        double lat2 = Math.toRadians(latitude2);
+        // 经度
+        double lng1 = Math.toRadians(longitude1);
+        double lng2 = Math.toRadians(longitude2);
+        // 纬度之差
+        double a = lat1 - lat2;
+        // 经度之差
+        double b = lng1 - lng2;
+        // 计算两点距离的公式
+        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(b / 2), 2)));
+        // 弧长乘地球半径, 返回单位: 千米
+        s =  s * EARTH_RADIUS;
+        return s;
     }
 }
