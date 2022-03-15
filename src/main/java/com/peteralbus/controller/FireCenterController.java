@@ -43,7 +43,6 @@ public class FireCenterController {
                 fireCenterList.add(fireCenter);
             }
         }
-        System.out.println(fireCenterList);
         return fireCenterList;
     }
     @RequestMapping("/getFireCenterResult")
@@ -80,7 +79,7 @@ public class FireCenterController {
         Estimate estimate=estimateService.queryAnalyzeById(earthquakeId);
         int temp=0;
         for(double f:FireCenterIntensityArr){
-            arr[0][temp]=f;//属性1，对于资助点1、2、3的值,因为基本上属性是固定的，可能资助点的数量会增加,假定属性最大值为10个
+            arr[0][temp]=f*100;//属性1，对于资助点1、2、3的值,因为基本上属性是固定的，可能资助点的数量会增加,假定属性最大值为10个
             arr[1][temp]=estimate.getPopulation()*f+100*Math.random();
             arr[2][temp]=Math.log(estimate.getPredictDeath()*estimate.getPredictEconomy())+100*Math.random();
             temp++;
@@ -165,7 +164,7 @@ public class FireCenterController {
             fireWeight.setFireCenterWeight(entry.getValue());
             resultFireWeightLists.add(fireWeight);
             count++;
-            if(count==10){
+            if(count==30){
                 break;
             }
         }
