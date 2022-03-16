@@ -45,15 +45,6 @@ public class FireCenterController {
         }
         return fireCenterList;
     }
-    @RequestMapping("/getFireCenterResult")
-    public List<Double> getFireCenterIntensity(){
-        List<Double> FireIntensity=new ArrayList<>();
-        List<FireCenter> fireCenters= fireCenterService.getAllFireCenter();//这里需要获取比较新的火点数据
-        for(FireCenter fireCenter:fireCenters){
-            FireIntensity.add(estimateController.getPointIntensity(16L, fireCenter.getFireLon(), fireCenter.getFireLat()));
-        }
-        return FireIntensity;
-    }
     @RequestMapping("/getOneFireCenter")
     public FireCenter getOneFireCenter(int id){
         return fireCenterService.getAllFireCenter().get(id);
@@ -63,7 +54,7 @@ public class FireCenterController {
         List<FireCenter> OnePlaceAllFireCenter=getOnePlaceAllFireCenter(earthquakeId);
         List<Double> FireCenterIntensityArr=new ArrayList<>();
         for(FireCenter fireCenter:OnePlaceAllFireCenter){
-            FireCenterIntensityArr.add(estimateController.getPointIntensity(16L, fireCenter.getFireLon(), fireCenter.getFireLat()));
+            FireCenterIntensityArr.add(estimateController.getPointIntensity(earthquakeId, fireCenter.getFireLon(), fireCenter.getFireLat()));
         }
         int FireCenterIntensityArSize=FireCenterIntensityArr.size();
         System.out.print("FireCenterIntensityArSize长度为"+FireCenterIntensityArSize);
