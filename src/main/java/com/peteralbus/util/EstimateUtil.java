@@ -50,7 +50,9 @@ public class EstimateUtil
         }
         double bdr = (intensity*17.205-101.861)*0.01;
         if(bdr <= 0)
-        bdr = 0.01;
+        {
+            bdr = 0.01;
+        }
         deathPredict = 0.461*mCoefficient*denCoefficient*timeCoefficient*strengthCoefficient*Math.exp(12.285*bdr);
         return deathPredict;
 //        double deathPredict = 0;
