@@ -1,5 +1,6 @@
 package com.peteralbus;
 
+import com.peteralbus.controller.FireCenterController;
 import com.peteralbus.entity.EarthquakeInfo;
 import com.peteralbus.entity.Estimate;
 import com.peteralbus.service.EarthquakeInfoService;
@@ -16,9 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @SpringBootTest
 class EarthquickApplicationTests
@@ -29,41 +28,28 @@ class EarthquickApplicationTests
     EstimateUtil estimateUtil;
     @Autowired
     EarthquakeInfoService earthquakeInfoService;
+
+    @Autowired
+    FireCenterController fireCenterController;
     @Test
     void contextLoads()
     {
-//        long startTime = System.currentTimeMillis();
-//        Map<String, Object> mapParameter = new HashMap<String, Object>();
-//        mapParameter.put("earthquakeId",16);
-//        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
-//        double magnitude = earthquakeInfo.getMagnitude(),
-//                highIntensity = earthquakeInfo.getHighIntensity(),
-//                longitude = earthquakeInfo.getLongitude(),
-//                latitude = earthquakeInfo.getLatitude(),
-//                longRadius = earthquakeInfo.getIntensityLineList().get(2).getLongRadius(),
-//                shortRadius = earthquakeInfo.getIntensityLineList().get(2).getShortRadius();
-//        System.out.println(longRadius);
-//        LocalDateTime earthquakeTime = earthquakeInfo.getEarthquakeTime();
-//        //将角度转换为弧度。
-//        double radians = Math.toRadians(latitude);
-//        double minLongitude = longitude-shortRadius/(111-Math.cos(radians)),
-//                maxLongitude = longitude+shortRadius/(111-Math.cos(radians)),
-//                minLatitude = latitude-longRadius/111,
-//                maxLatitude = latitude+longRadius/111;
-//        int population=(int)estimateService.getPopulation(minLongitude,maxLongitude,minLatitude,maxLatitude);
-//        double death=estimateUtil.deathPredict(earthquakeInfo.getEarthquakeId(),population,magnitude,highIntensity,earthquakeTime,longitude,latitude);
-//        long endTime = System.currentTimeMillis();
-//        long usedTime = (endTime-startTime)/1000;
-//        System.out.println(death + " " + usedTime);
-//        getPopulation(100.7342,25.5736);
-//        getPopulation(99.9586,25.6753);
-//        getPopulation(100.1926,25.9121);
-//        getPopulation(100.1885,25.9252);
-//        getPopulation(99.7768,25.3342);
-//        getPopulation(99.9586,25.6752);
-//        getPopulation(100.3105,25.6775);
-//        getPopulation(100.1209,25.7921);
-//        getPopulation(100.4937,25.3366);
+        System.out.println(fireCenterController.getFireCenterWeight(16L, 12));
+//        double[][] data =  {{6.962645,67101.0,730.3979,1.3},
+//                {5.643831,50732.0,170.8517,1.7},
+//                {7.775079,39755.0,89.2054,1.0},
+//                {6.568763,67101.0,294.3379,1.0},
+//                {6.552100,67101.0,281.1741,1.9},
+//                {6.669364,43274.0,41.5144,1.2},
+//                {7.774892,39755.0,89.2054,1.4},
+//                {6.511145,67101.0,518.4596,1.4},
+//                {6.966898,67101.0,382.3772,1.7},
+//                {5.894564,35641.0,374.3219,1.2}};
+//        List<Integer> list = new ArrayList<>();
+//        list.add(0);
+//        list.add(2);
+//        list.add(3);
+//        System.out.println(Arrays.toString(estimateUtil.entropyMethod(data, 10, 4, list)));
     }
 
     void getPopulation(double longitude,double latitude)

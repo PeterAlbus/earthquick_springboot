@@ -4,6 +4,7 @@ import com.peteralbus.entity.*;
 import com.peteralbus.service.EarthquakeInfoService;
 import com.peteralbus.service.EstimateService;
 import com.peteralbus.service.FireCenterService;
+import com.peteralbus.util.EstimateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -12,159 +13,186 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 
+/**
+ * The type Fire center controller.
+ */
 @CrossOrigin
 @RestController
 public class FireCenterController {
+    private FireCenterService fireCenterService;
+    private EstimateController estimateController;
+    private EstimateService estimateService;
+    private EarthquakeInfoService earthquakeInfoService;
+    private EstimateUtil estimateUtil;
+    /**
+     * The Max fire center count.
+     */
+    static Integer MAX_FIRE_CENTER_COUNT = 20;
+
+    /**
+     * Sets fire center service.
+     *
+     * @param fireCenterService the fire center service
+     */
     @Autowired
-    FireCenterService fireCenterService;
+    public void setFireCenterService(FireCenterService fireCenterService) {
+        this.fireCenterService = fireCenterService;
+    }
+
+    /**
+     * Sets estimate controller.
+     *
+     * @param estimateController the estimate controller
+     */
     @Autowired
-    EstimateController estimateController;
+    public void setEstimateController(EstimateController estimateController) {
+        this.estimateController = estimateController;
+    }
+
+    /**
+     * Sets estimate service.
+     *
+     * @param estimateService the estimate service
+     */
     @Autowired
-    EstimateService estimateService;
+    public void setEstimateService(EstimateService estimateService) {
+        this.estimateService = estimateService;
+    }
+
+    /**
+     * Sets earthquake info service.
+     *
+     * @param earthquakeInfoService the earthquake info service
+     */
     @Autowired
-    EarthquakeInfoService earthquakeInfoService;
+    public void setEarthquakeInfoService(EarthquakeInfoService earthquakeInfoService) {
+        this.earthquakeInfoService = earthquakeInfoService;
+    }
+
+    /**
+     * Sets estimate util.
+     *
+     * @param estimateUtil the estimate util
+     */
+    @Autowired
+    public void setEstimateUtil(EstimateUtil estimateUtil) {
+        this.estimateUtil = estimateUtil;
+    }
+
+    /**
+     * Gets all fire center.
+     *
+     * @return the all fire center
+     */
     @RequestMapping("/getAllFireCenter")
-    public List<FireCenter> getAllFireCenter(){
+    public List<FireCenter> getAllFireCenter() {
         return fireCenterService.getAllFireCenter();
     }
 
-    //获取一个地震区域的消防站位置
-    public List<FireCenter> getOnePlaceAllFireCenter(Long earthquakeId){
-        List<FireCenter> fireCenters=getAllFireCenter();
-        List<FireCenter> fireCenterList=new ArrayList<>();
-        Map<String,Object>mapParameter=new HashMap<>();
-        mapParameter.put("earthquakeId",earthquakeId);
-        EarthquakeInfo earthquakeInfo=earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
-        for(FireCenter fireCenter:fireCenters){
-            double distanceTwoPlaces=getDistance(fireCenter.getFireLon(),fireCenter.getFireLat(),earthquakeInfo.getLongitude(),earthquakeInfo.getLatitude());
-            List<IntensityLine> intensityLineList=earthquakeInfo.getIntensityLineList();
-            if(distanceTwoPlaces<intensityLineList.get(intensityLineList.size()-1).getLongRadius())
-            {
+    /**
+     * 获取一个地震区域的消防站位置
+     *
+     * @param earthquakeId the earthquake id
+     * @return the one place all fire center
+     */
+    public List<FireCenter> getOnePlaceAllFireCenter(Long earthquakeId) {
+        List<FireCenter> fireCenters = fireCenterService.getAllFireCenter();
+        List<FireCenter> fireCenterList = new ArrayList<>();
+        Map<String, Object> mapParameter = new HashMap<>();
+        mapParameter.put("earthquakeId", earthquakeId);
+        EarthquakeInfo earthquakeInfo = earthquakeInfoService.queryInfoWithLine(mapParameter).get(0);
+        for (FireCenter fireCenter : fireCenters) {
+            double distanceTwoPlaces = getDistance(fireCenter.getFireLon(), fireCenter.getFireLat(), earthquakeInfo.getLongitude(), earthquakeInfo.getLatitude());
+            List<IntensityLine> intensityLineList = earthquakeInfo.getIntensityLineList();
+            if (distanceTwoPlaces < intensityLineList.get(intensityLineList.size() - 1).getLongRadius()) {
                 fireCenterList.add(fireCenter);
             }
         }
         return fireCenterList;
     }
+
+    /**
+     * Gets one fire center.
+     *
+     * @param id the id
+     * @return the one fire center
+     */
     @RequestMapping("/getOneFireCenter")
-    public FireCenter getOneFireCenter(int id){
+    public FireCenter getOneFireCenter(int id) {
         return fireCenterService.getAllFireCenter().get(id);
     }
+
+    /**
+     * 根据地震ID，寻找附近的消防站，并随机选取fireCenterCount个进行物资分配计算.
+     *
+     * @param earthquakeId    地震ID
+     * @param fireCenterCount 物资分配的救援点数量
+     * @return FireWeight，救援点权重，包含救援点信息
+     */
     @RequestMapping("/findFireCenterNearby")
-    public List<FireWeight> getFireCenterWeight(Long earthquakeId){
-        List<FireCenter> OnePlaceAllFireCenter=getOnePlaceAllFireCenter(earthquakeId);
-        List<Double> FireCenterIntensityArr=new ArrayList<>();
-        for(FireCenter fireCenter:OnePlaceAllFireCenter){
-            FireCenterIntensityArr.add(estimateController.getPointIntensity(earthquakeId, fireCenter.getFireLon(), fireCenter.getFireLat()));
-        }
-        int FireCenterIntensityArSize=FireCenterIntensityArr.size();
-        System.out.print("FireCenterIntensityArSize长度为"+FireCenterIntensityArSize);
-        if(FireCenterIntensityArSize==0){
+    public List<FireWeight> getFireCenterWeight(Long earthquakeId, Integer fireCenterCount) {
+        if (fireCenterCount > MAX_FIRE_CENTER_COUNT) {
+            // 自行修改封装后的返回值,错误：资助点数量不能过多
             return null;
         }
-        Map<Integer,Integer>map = new HashMap<Integer,Integer>();
-        for(int i=0;i<FireCenterIntensityArSize;i++){
-            map.put(i,OnePlaceAllFireCenter.get(i).getFireId());
-        }
-        double [][] arr=new double [10][FireCenterIntensityArSize];
-        //通过earthquakeId获得想要的地区的估计结果
-        Estimate estimate=estimateService.queryAnalyzeById(earthquakeId);
-        int temp=0;
-        for(double f:FireCenterIntensityArr){
-            arr[0][temp]=f*100;//属性1，对于资助点1、2、3的值,因为基本上属性是固定的，可能资助点的数量会增加,假定属性最大值为10个
-            arr[1][temp]=estimate.getPopulation()*f+100*Math.random();
-            arr[2][temp]=Math.log(estimate.getPredictDeath()*estimate.getPredictEconomy())+100*Math.random();
-            temp++;
-        }
-//        arr[1]=new double[] {0.847,0.63,0.921};
-//        arr[2]=new double[] {524,439,842};
-        double [][]arrNew=new double[10][FireCenterIntensityArSize];
-        double [][]arrNew1=new double[10][FireCenterIntensityArSize];
-        double sumProvide=0;
-        double max;
-        double min;
-        int strictNum=arr[0].length;//代表有多少个救助点
-        double k=1/(Math.log((double)strictNum));
-        double[] e=new double[10];//第 j 项指标的熵值 ej
-        double[] g=new double[10];//差异性系数  gi越大指标越重要
-        for(int j=0;j<3;j++) {
-            min=max=arr[j][0];
-            sumProvide=0;
-            for(int i=0;i<arr[j].length;i++) {
-                if(arr[j][i]<min) {
-                    min=arr[j][i];
-                }
-                if(arr[j][i]>max) {
-                    max=arr[j][i];
-                }
-            }
-            for(int i=0;i<arr[j].length;i++) {
-                arrNew[j][i]=(arr[j][i]-min)/(max-min);//假设都是正向指标，正向指标的值越大，就说明该地方越需要救助
-                arrNew1[j][i]=arrNew[j][i];
-                sumProvide+=arrNew[j][i];
-            }
-            for(int i=0;i<arr[j].length;i++) {
-                arrNew[j][i]=(arrNew[j][i]/sumProvide)+0.0000001;
-            }
-            double sumArrNewHang=0.0;
-            for(int i=0;i<arr[j].length;i++) {
-                //System.out.println("sum"+Math.log(arrNew[j][i]));
-                sumArrNewHang+=(arrNew[j][i]*Math.log(arrNew[j][i]));
-            }
-            e[j]=(-k)*sumArrNewHang;
-            g[j]=1-e[j];
-        }
-        double[] a=new double[10];//每个属性所占的权数
-        double SumG=0.0;
-        for(int i=0;i<g.length;i++) {
-            SumG+=g[i];
-        }
-        for(int i=0;i<g.length;i++) {
-            a[i]=g[i]/SumG;
-        }
-        double[]w=new double[strictNum];
-        for(int j=0;j<strictNum;j++) {
-            w[j]=0;
-            for(int i=0;i<3;i++) {
-                w[j]+=a[i]*arrNew1[i][j];
-            }
-//            w[j]=1-w[j];
-        }
-        Map arrayStrict=new HashMap();
-        List<Double> arrayW1=new ArrayList<>();
-        Map topTen=new LinkedHashMap();
-        List <FireWeight> resultFireWeightLists=new ArrayList<>();
-        for(int i=0;i<strictNum;i++){
-            arrayW1.add(w[i]);
-//            System.out.println("第+"+(i+1)+"个地区的权重值为"+w[i]);
-//            arrayStrict.put(i+1,w[i]);
-              arrayStrict.put(i,w[i]);
-        }
-        List<Map.Entry<Integer,Double>> entrys=new ArrayList<>(arrayStrict.entrySet());
-        Collections.sort(entrys, new MyComparator());
-        //输出排序后的键值对
-        int count=0;
-        for(Map.Entry<Integer,Double> entry:entrys){
-            topTen.put(entry.getKey(),entry.getValue());
-            FireCenter resultFireCenter=getOneFireCenter(map.get(entry.getKey()));
-            FireWeight fireWeight=new FireWeight();
-            fireWeight.setFireId(resultFireCenter.getFireId());
-            fireWeight.setFireLat(resultFireCenter.getFireLat());
-            fireWeight.setFireLon(resultFireCenter.getFireLon());
-            fireWeight.setFireName(resultFireCenter.getFireName());
-            fireWeight.setFireAddress(resultFireCenter.getFireAddress());
-            fireWeight.setFireCenterWeight(entry.getValue());
-            resultFireWeightLists.add(fireWeight);
-            count++;
-            if(count==30){
+        List<FireCenter> fireCenterList = getOnePlaceAllFireCenter(earthquakeId);
+        List<FireCenter> randomFireCenterList = new ArrayList<>();
+        Random random = new Random();
+        // 随机选取 fireCenterCount 个消防站
+        for (int i = 0; i < fireCenterCount; i++) {
+            if(fireCenterList.size()==0){
                 break;
             }
+            int index = random.nextInt(fireCenterList.size());
+            randomFireCenterList.add(fireCenterList.get(index));
+            fireCenterList.remove(index);
         }
-
-//        return arrayW1;
-//        return topTen;
+        int randomFireCenterListSize = randomFireCenterList.size();
+        if(randomFireCenterList.size()==0) {
+            // 自行修改封装后的返回值,错误：该地区没有找到消防站
+            return null;
+        }
+        double[][] arr = new double[randomFireCenterListSize][10];
+        int temp = 0;
+        //通过earthquakeId获得想要的地区的估计结果
+        Estimate estimate = estimateService.queryAnalyzeById(earthquakeId);
+        // 依次设定每个救援点的指标，最多可以设置10个指标
+        for (FireCenter fireCenter : randomFireCenterList) {
+            Double intensity = estimateController.getPointIntensity(earthquakeId, fireCenter.getFireLon(), fireCenter.getFireLat());
+            arr[temp][0] = intensity * 100;
+            arr[temp][1] = estimate.getPopulation() * intensity + 100 * Math.random();
+            arr[temp][2] = Math.log(estimate.getPredictDeath() * estimate.getPredictEconomy()) + 100 * Math.random();
+            temp++;
+        }
+        Double[] weights = estimateUtil.entropyMethod(arr,randomFireCenterListSize,3,new ArrayList<Integer>(Arrays.asList(0,1,2)));
+        List<FireWeight> resultFireWeightLists = new ArrayList<>();
+        for (int i=0;i<randomFireCenterListSize;i++) {
+            FireWeight fireWeight = new FireWeight();
+            fireWeight.setFireId(randomFireCenterList.get(i).getFireId());
+            fireWeight.setFireLat(randomFireCenterList.get(i).getFireLat());
+            fireWeight.setFireLon(randomFireCenterList.get(i).getFireLon());
+            fireWeight.setFireName(randomFireCenterList.get(i).getFireName());
+            fireWeight.setFireAddress(randomFireCenterList.get(i).getFireAddress());
+            fireWeight.setFireCenterWeight(weights[i]);
+            resultFireWeightLists.add(fireWeight);
+        }
+        // 返回值自行封装
         return resultFireWeightLists;
     }
+
+
+
     private static final double EARTH_RADIUS = 6378.137;
+
+    /**
+     * Gets distance.
+     *
+     * @param longitude1 the longitude 1
+     * @param latitude1  the latitude 1
+     * @param longitude2 the longitude 2
+     * @param latitude2  the latitude 2
+     * @return the distance
+     */
     public static double getDistance(double longitude1, double latitude1, double longitude2, double latitude2) {
         // 纬度
         double lat1 = Math.toRadians(latitude1);
@@ -179,7 +207,7 @@ public class FireCenterController {
         // 计算两点距离的公式
         double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(b / 2), 2)));
         // 弧长乘地球半径, 返回单位: 千米
-        s =  s * EARTH_RADIUS;
+        s = s * EARTH_RADIUS;
         return s;
     }
 }

@@ -1,12 +1,17 @@
 package com.peteralbus.util;
 
+import com.peteralbus.entity.FireWeight;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The type Estimate util.
+ *
  * @author PeterAlbus
  */
 @Component
@@ -15,14 +20,16 @@ public class EstimateUtil
     /**
      * death predict int.
      *
-     * @param population the population
-     * @param magnitude  the magnitude
+     * @param earthquakeId   the earthquake id
+     * @param population     the population
+     * @param magnitude      the magnitude
+     * @param intensity      the intensity
      * @param earthquakeTime the time of earthquake
-     * @param longitude the longitude
-     * @param latitude the latitude
+     * @param longitude      the longitude
+     * @param latitude       the latitude
      * @return the double
      */
-    public double deathPredict(Long earthquake_id,int population, double magnitude, double intensity, LocalDateTime earthquakeTime,Double longitude,Double latitude)
+    public double deathPredict(Long earthquakeId,int population, double magnitude, double intensity, LocalDateTime earthquakeTime,Double longitude,Double latitude)
     {
         double deathPredict = 0;
         /*M为震级 I为震中强度*/
@@ -67,7 +74,82 @@ public class EstimateUtil
      * @return the double
      */
     public double economyPredict(double highIntensity)
-    {return Math.pow(10,0.84444*highIntensity-1.831)/10000;
+    {
+        return Math.pow(10,0.84444*highIntensity-1.831)/10000;
+    }
+
+    /**
+     * 使用熵值法计算每个点的权重
+     *
+     * @param data                    二维数组，pointCount个点的parameterCount个参考指标
+     * @param pointCount              救援点数量
+     * @param parameterCount          参考指标数量
+     * @param positiveIndicatorsIndex 参考指标中为正向指标的索引
+     * @return 权重列表Double[pointCount], 依次对应data中的每个点
+     */
+    public Double[] entropyMethod(double[][] data, int pointCount, int parameterCount, List<Integer> positiveIndicatorsIndex) {
+        Double[] max = new Double[parameterCount];
+        Double[] min = new Double[parameterCount];
+        Double[] sum = new Double[parameterCount];
+        // 求出每个属性的最大值、最小值
+        for(int i = 0; i < parameterCount; i++) {
+            max[i] = Double.MIN_VALUE;
+            min[i] = Double.MAX_VALUE;
+            sum[i] = 0.0;
+            for(int j=0;j<pointCount;j++) {
+                if(data[j][i] > max[i]) {
+                    max[i] = data[j][i];
+                }
+                if(data[j][i] < min[i]) {
+                    min[i] = data[j][i];
+                }
+            }
+        }
+        // 归一化
+        Double[][] normalizedData = new Double[pointCount][parameterCount];
+        for(int i = 0; i < parameterCount; i++) {
+            for(int j=0;j < pointCount;j++) {
+                if(positiveIndicatorsIndex.contains(i)) {
+                    normalizedData[j][i] = (data[j][i] - min[i]) / (max[i] - min[i]);
+                } else {
+                    normalizedData[j][i] = (max[i] - data[j][i]) / (max[i] - min[i]);
+                }
+                sum[i] += normalizedData[j][i];
+            }
+        }
+        // 每个属性指标值在该属性所有数值中的比例
+        Double[][] percentage = new Double[pointCount][parameterCount];
+        for(int i = 0; i < parameterCount; i++) {
+            for(int j=0;j<pointCount;j++) {
+                percentage[j][i] = normalizedData[j][i] / sum[i] + 0.000000000001;
+            }
+        }
+        // 熵值
+        Double[] entropy = new Double[parameterCount];
+        // 变异系数的总和
+        double sumG = 0.0;
+        for(int i = 0; i < parameterCount; i++) {
+            double sumJ = 0.0;
+            for(int j=0;j< pointCount;j++) {
+                sumJ += percentage[j][i] * Math.log(percentage[j][i]);
+            }
+            entropy[i] = (-1/Math.log(10))*sumJ;
+            sumG += 1 - entropy[i];
+        }
+        // 每个系数的权重
+        Double[] parameterWeight = new Double[parameterCount];
+        for(int i = 0; i < parameterCount; i++) {
+            parameterWeight[i] = (1 - entropy[i]) / sumG;
+        }
+        // 计算每个点的权重
+        Double[] weight = new Double[pointCount];
+        for(int i = 0; i < pointCount; i++) {
+            weight[i] = 0.0;
+            for(int j = 0; j < parameterCount; j++) {
+                weight[i] += percentage[i][j] * parameterWeight[j];
+            }
+        }
+        return weight;
     }
 
 }

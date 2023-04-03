@@ -5,5 +5,5 @@ import com.peteralbus.entity.FireCenter;
 import java.util.List;
 
 public interface FireCenterService {
-    List<FireCenter>getAllFireCenter();
+    List<FireCenter> getAllFireCenter();
 }
